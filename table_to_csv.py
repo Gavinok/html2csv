@@ -152,6 +152,26 @@ def getdata(rows, headers):
             tabledata.append(datalist)
     return tabledata
 
+def print_table(tableheaders, csvdata):
+    """ print the given table to stdout
+    :returns: 1 if successful 0 if not
+    """
+    writer = csv.writer(sys.stdout)
+
+    # print table headers if they exist
+    if len(tableheaders):
+        writer.writerow(tableheaders)
+        # append missing colombs
+        # for i in csvdata:
+        #     for j in i:
+
+    # print the data for each row in the table
+    for i in csvdata:
+        for j in i:
+            j = remove_placeholders(j)
+            writer.writerow(j)
+    return 1
+
 def main():
     """ This is the main for my program"""
 
