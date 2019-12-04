@@ -182,104 +182,38 @@ def main():
     try:
         for line in fileinput.input():
             # print(line, "\n")
-            print("new line ", "\n")
-            print(containstable(line),
-                  containsrow(line),
-                  containshd(line),
-                  endhd(line),
-                  containstd(line),
-                  endtd(line),
-                  endrow(line),
-                  endtable(line))
-            # print("line is before", line, "\n")
-            # line = clean_tags(line)
-            # print("line is after", line, "\n")
+            # print("new line ", "\n")
+            # print(containstable(line),
+            #       containsrow(line),
+            #       containshd(line),
+            #       endhd(line),
+            #       containstd(line),
+            #       endtd(line),
+            #       endrow(line),
+            #       endtable(line))
             lines += clean_line(line)
-        print(lines)
-        tables = containstable(lines)
-        fieldnames = []
-        if tables:
-            # print("tables is ", tables, "\n")
-            headers_found = 0
-            for table in tables:
-                csvdata = []
-                print("table is ", table, "\n")
-                rows = containsrow(table)
-                if not rows:
-                    print("error not rows", "\n")
-                tableheaders = getheaders(rows)
-                # csvdata.append(data)
-               # if fieldnames:
-               #     tableheaders[0]
-                   # for tableheader in tableheaders:
-                   #     #statements
-                data = getdata(rows, fieldnames)
-                csvdata.append(data)
-
-                # for i in csvdata:
-                #     print("table from csv is", i, "\n")
-                writer = csv.writer(sys.stdout)
-                for i in csvdata:
-                    for j in i:
-                        writer.writerow(j)
-                print("\n")
-
-        # print("csvdata is ", csvdata, "\n")
-
-        #  TODO: switch from dictwrighter to wright by hand <02-12-19 Gavin Jaeger-Freeborn>
-        # writer = csv.writer(sys.stdout)
-        # for i in csvdata:
-        #     writer.writerow(i)
-
-
-        # with open(filename, mode='r', encoding='utf-8-sig') as csv_file:
-        #     csv_reader = csv.DictReader(csv_file, delimiter=',')
-        #     linenumber = 0
-        #     for line in csv_reader:
-        #         # make all enteries lowercase
-        #         line = {k.lower(): v.lower() for k, v in line.items()}
-        #         # test_args(filename, args,line,linenumber)
-        #         data.append(line)
-        #         linenumber += linenumber
-
     except FileNotFoundError:
-        print("Error: ", filename, "cannot be found or does not exist", file=sys.stderr)
+        print("Error: not html table to parse cannot be found or does not exist", file=sys.stderr)
 
-    # groups = []
-    # if len(groups) > 20:
-    #     print(" Error: ", filename, ":", args.group_by, "has been capped at 20 distinct values", args.group_by, "\n", file=sys.stderr)
-    # # initialize csv and setup headers based on arguments
-    # headers = getheaders(args)
-    # complete_csv_dict = []
+    # print(lines)
+    tables = containstable(lines)
+    if tables:
+        # print("tables is ", tables, "\n")
+        headers_found = 0
+        for table in tables:
+            fieldnames = []
+            csvdata = []
+            # print("table is ", table, "\n")
+            rows = containsrow(table)
+            if not rows:
+                print("error not rows", "\n")
+            tableheaders = getheaders(rows)
+            data = getdata(rows, fieldnames)
+            csvdata.append(data)
 
-    # # if grouping the results
-    # if args.group_by:
+            print_table(tableheaders, csvdata)
+            print("\n")
 
-    #     # sort the data based on the groupings to be separated
-    #     try:
-    #         data = sorted(data, key=lambda k: k[args.group_by])
-    #     except KeyError:
-    #         print(" Error: ", filename, ":no group-by argument with name", args.group_by, "\n", file=sys.stderr)
-    #         sys.exit(9)
-    #     groups = seperate_groups(args.group_by, data)
-    #     headers.insert(0, args.group_by)
-
-    #     # separate into groups then determine the values for each row in the csv
-    #     for i in groups:
-    #         csventries = calc_val(filename, args, i)
-    #         csventries[args.group_by] = i[0][args.group_by]
-    #         complete_csv_dict.append(csventries)
-
-    # else:
-    #     # if not grouping the results
-    #     csventries = calc_val(filename, args, data)
-    #     complete_csv_dict.append(csventries)
-
-    # writer = csv.DictWriter(sys.stdout, fieldnames=headers)
-    # writer.writeheader()
-
-    # for i in complete_csv_dict:
-    #     writer.writerow(i)
 
 if __name__ == '__main__':
     main()
