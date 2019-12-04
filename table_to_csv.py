@@ -17,19 +17,8 @@ import sys
 import csv
 import fileinput
 import re
-import html
-#  TODO: checkout using html.parser <01-12-19 Gavin Jaeger-Freeborn>
 
-""" state mechine
-table start     ts
-table end       te
-row start       rs
-row end         re
-Heading start   hs
-Heading end     he
-"""
-
-placeholder = '++xxyyzz'
+PLACEHOLDER = '++xxyyzz'
 
 def containstable(line):
     """checks if the line contains a table declairation
