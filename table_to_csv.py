@@ -87,11 +87,11 @@ def match_tag(tag, line):
     """
     regex = '<' + tag + '[^>]*>'
 
-    line = re.sub('<' + tag + '[^>]*>','<' + tag + '>', line)
-    line = re.sub('</' + tag + '[^>]*>','</' + tag + '>', line)
+    line = re.sub('<' + tag + '[^>]*>', '<' + tag + '>', line)
+    line = re.sub('</' + tag + '[^>]*>', '</' + tag + '>', line)
     lookregex = '(?<=<' + tag + '>)(.*?)?(?=</' + tag + '>)'
     # remove extra white space
-    line = re.sub('\s+',' ', line)
+    line = re.sub('\s+', ' ', line)
     matchg = re.search(regex, line)
     if matchg:
         matches = re.findall(lookregex, line)
@@ -107,16 +107,20 @@ def clean_line(line):
         and removes newline character
     :returns: simplified line successful 0 if not
     """
-    line = re.sub('></','>' + placeholder + '</',line)
+    line = re.sub('></', '>' + PLACEHOLDER + '</', line)
     line = line.rstrip()
     return line
 
-def clean_item(item):
-    """removes the placeholder from the given element
-    :returns: element without the placeholder
+def remove_placeholders(row):
+    """removes the placeholder each element in the given row
+    :returns: the row without placeholders
     """
-    item = re.sub(placeholder, '', item)
-    return item
+    corrected_row = []
+    for item in row:
+        if item == PLACEHOLDER:
+            item = ''
+        corrected_row.append(item)
+    return corrected_row
 
 def getheaders(rows):
     """gets the headers from the given rows as a list
