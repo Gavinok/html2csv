@@ -29,6 +29,7 @@ Heading start   hs
 Heading end     he
 """
 
+placeholder = '++xxyyzz'
 
 def containstable(line):
     """checks if the line contains a table declairation
@@ -106,28 +107,57 @@ def match_tag(tag, line):
     if matchg:
         matches = re.findall(lookregex, line)
         if matches:
-            for match in matches:
-                print("match for ", tag, " is ", match, "\n")
+            # for match in matches:
+                # print("match for ", tag, " is ", match, "\n")
             return matches
     return 0
 
-# def getheaders(rows):
-#     """ finds the headers in the given rows
-#     :returns: the headers as a list, 0 if no headers are found
-#     """
-#     #  TODO: finish getheaders <02-12-19 Gavin Jaeger-Freeborn>
-#     for row in rows:
-#         headers = containshd(row)
-#         if headers:
-#             headers_found = 1
-#             for header in headers:
-#                 fieldnames.append(header)
+def clean_line(line):
+    """ removes the non table related tags,
+        puts a placeholder in empty tags,
+        and removes newline character
+    :returns: simplified line successful 0 if not
+    """
+    line = re.sub('></','>' + placeholder + '</',line)
+    line = line.rstrip()
+    return line
 
-# def getdata(rows):
-#     """ the data inside the given rows and converts it to a list of lists one list per row
-#     :returns: Data as a list of list, 0 if no data is found
-#     """
-    #  TODO: finish getdata <02-12-19 Gavin Jaeger-Freeborn>
+def clean_item(item):
+    """removes the placeholder from the given element
+    :returns: element without the placeholder
+    """
+    item = re.sub(placeholder, '', item)
+    return item
+
+def getheaders(rows):
+    """gets the headers from the given rows as a list
+    :returns: list of headers or 0 if none
+    """
+    fieldnames = []
+    for row in rows:
+        headers = containshd(row)
+        if headers:
+            headers_found = 1
+            for header in headers:
+                fieldnames.append(header)
+    return fieldnames
+
+def getdata(rows, headers):
+    """gets the data from the given rows as a list of lists
+    :returns: list for each row and a list data or 0 if none
+    """
+    tabledata = []
+    for row in rows:
+        data = containstd(row)
+        # if data == 0:
+            # print("error data is 0", "\n")
+        if data:
+            datalist = []
+            for item in data:
+                datalist.append(item)
+            # print("datalist is", datalist, "\n")
+            tabledata.append(datalist)
+    return tabledata
 
 def main():
     """ This is the main for my program"""
@@ -148,56 +178,44 @@ def main():
                   endtd(line),
                   endrow(line),
                   endtable(line))
-            print("line is before", line, "\n")
-            line = re.sub('></','> </',line)
-            print("line is after", line, "\n")
-            lines += line.rstrip()
+            # print("line is before", line, "\n")
+            # line = clean_tags(line)
+            # print("line is after", line, "\n")
+            lines += clean_line(line)
         print(lines)
         tables = containstable(lines)
         fieldnames = []
-        csvdata = []
         if tables:
             # print("tables is ", tables, "\n")
             headers_found = 0
             for table in tables:
+                csvdata = []
                 print("table is ", table, "\n")
                 rows = containsrow(table)
-                if rows:
-                    #headers = getheaders(rows)
-                    #rows = getrows(rows)
-                    for row in rows:
-                        headers = containshd(row)
-                        if headers:
-                            headers_found = 1
-                            for header in headers:
-                                fieldnames.append(header)
-                        data = containstd(row)
-                        if data == 0:
-                            print("error data is 0", "\n")
-                        if data:
-                            if headers_found:
-                                datadict = {}
-                                for index in range(len(fieldnames)):
-                                    try:
-                                        datadict[fieldnames[index]] = data[index]
-                                    except IndexError:
-                                        datadict[fieldnames[index]] = ''
-                            # else:
-                            #     datadict = []
-                            # for item in data:
-                            #     datadict.append(data[index])
-                            csvdata.append(datadict)
+                if not rows:
+                    print("error not rows", "\n")
+                tableheaders = getheaders(rows)
+                # csvdata.append(data)
+               # if fieldnames:
+               #     tableheaders[0]
+                   # for tableheader in tableheaders:
+                   #     #statements
+                data = getdata(rows, fieldnames)
+                csvdata.append(data)
 
-        for i in csvdata:
-            print("table from csv is", i, "\n")
+                # for i in csvdata:
+                #     print("table from csv is", i, "\n")
+                writer = csv.writer(sys.stdout)
+                for i in csvdata:
+                    for j in i:
+                        writer.writerow(j)
+                print("\n")
+
         # print("csvdata is ", csvdata, "\n")
 
         #  TODO: switch from dictwrighter to wright by hand <02-12-19 Gavin Jaeger-Freeborn>
-
-        # writer = csv.DictWriter(sys.stdout, fieldnames=headers)
-        # writer.writeheader()
-
-        # for i in complete_csv_dict:
+        # writer = csv.writer(sys.stdout)
+        # for i in csvdata:
         #     writer.writerow(i)
 
 
