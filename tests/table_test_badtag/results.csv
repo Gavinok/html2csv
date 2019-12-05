@@ -1,0 +1,25 @@
+TABLE 1:
+Student Number,Student Name,Major,A1 mark,A2 mark
+V00000001,Will Byers,Paranormal Studies,,
+V00123456,Alastair Avocado,Psychology,12,
+V00123457,Rebecca Raspberry,Computer Science,17,14
+V00314159,Fiona Framboise,Computer Science,,17
+V00654321,Meredith Malina,Software Engineering,18,12
+V00654322,Hannah Hindbaer,Physics,15,18
+,Neal Naranja,Anthropology,15,15
+
+TABLE 2:
+Movie Title,ID,Genre,Rating,Director,Year
+Thor: Ragnarok,0001,Action,8.2,Taika Waititi,2017
+Star Wars: The Last Jedi,00111,Sci-Fi,,Rian Johnson,2017
+Fight Club,0201,Drama,8.8,David Fincher,1999
+Amélie,1221,Comedy,8.2,Jean-Pierre Jeunet,2001
+
+TABLE 3:
+Album Name,Artist,Genre,Rating
+Singing Saw,Kevin Morby,Indie Rock,8.1
+Kid A,Radiohead,Alternative Rock,9.5
+Transformer,Lou Reed,Glam Rock,9.9
+Aladdin Sane,<strong>David Bowie</strong>,Art Rock,8.7
+Wish You Were Here,Pink Floyd,Prog Rock,9.5
+Missing Data Row,,,
