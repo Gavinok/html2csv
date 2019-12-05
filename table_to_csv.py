@@ -87,11 +87,14 @@ def match_tag(tag, line):
     """
     regex = '<' + tag + '[^>]*>'
 
+    lookregex = '(?<=<' + tag + '>)(.*?)?(?=</' + tag + '>)'
+
+    # remove extra data from tag
     line = re.sub('<' + tag + '[^>]*>', '<' + tag + '>', line)
     line = re.sub('</' + tag + '[^>]*>', '</' + tag + '>', line)
-    lookregex = '(?<=<' + tag + '>)(.*?)?(?=</' + tag + '>)'
     # remove extra white space
     line = re.sub('\s+', ' ', line)
+
     matchg = re.search(regex, line)
     if matchg:
         matches = re.findall(lookregex, line)
@@ -108,17 +111,19 @@ def clean_line(line):
     :returns: simplified line successful 0 if not
     """
     line = re.sub('></', '>' + PLACEHOLDER + '</', line)
+    line = re.sub('></', '>' + PLACEHOLDER + '</', line)
     line = line.rstrip()
     return line
 
-def remove_placeholders(row):
+def strip_element(row):
     """removes the placeholder each element in the given row
     :returns: the row without placeholders
     """
+    #  TODO: use regex to remove just the PLACEHOLDER instead using exactly the placeholder <04-12-19 Gavin Jaeger-Freeborn>
     corrected_row = []
     for item in row:
-        if item == PLACEHOLDER:
-            item = ''
+        item = item.strip()
+        item = item.replace(PLACEHOLDER, '')
         corrected_row.append(item)
     return corrected_row
 
@@ -130,7 +135,6 @@ def getheaders(rows):
     for row in rows:
         headers = containshd(row)
         if headers:
-            headers_found = 1
             for header in headers:
                 fieldnames.append(header)
     return fieldnames
@@ -142,47 +146,77 @@ def getdata(rows, headers):
     tabledata = []
     for row in rows:
         data = containstd(row)
-        # if data == 0:
-            # print("error data is 0", "\n")
+        # print("data is ", data , "\n")
         if data:
             datalist = []
             for item in data:
                 datalist.append(item)
-            # print("datalist is", datalist, "\n")
             tabledata.append(datalist)
+
     return tabledata
 
 def print_table(tableheaders, csvdata):
     """ print the given table to stdout
     :returns: 1 if successful 0 if not
     """
-    writer = csv.writer(sys.stdout)
+    # colnum = get_colnum(tableheaders, csvdata)
+    # csvdata = append_cols(colnum, csvdata)
+    # print("num of cols is ", colnum, "\n")
 
+    writer = csv.writer(sys.stdout, lineterminator='\n')
     # print table headers if they exist
     if len(tableheaders):
         writer.writerow(tableheaders)
-        # append missing colombs
-        # for i in csvdata:
-        #     for j in i:
 
     # print the data for each row in the table
     for i in csvdata:
         for j in i:
-            j = remove_placeholders(j)
+            j = strip_element(j)
             writer.writerow(j)
     return 1
 
+def append_cols(num, csvdata):
+    """ensures all rows have the same number of columns as num
+    :returns: csvdata with corrected number of column
+    """
+    for i in csvdata:
+        for j in i:
+            for x in range(num - len(j)):
+                j.append('')
+    return csvdata
+
+def get_colnum(headers, csvdata):
+    """ adds empty column to the rows that don't contain any data
+    :returns: list of rows with corrected column number
+    """
+    colnum = -1
+    if len(headers):
+        colnum = len(headers)
+        return colnum
+
+    for table in csvdata:
+        for row in table:
+            cols = 0
+            for i in row:
+                cols += 1
+            if cols > colnum:
+                colnum = cols
+    return colnum
+
+
 def main():
     """ This is the main for my program"""
+    if sys.stdin.isatty():
+        sys.stderr.write("Error nothing set from stdin")
+        sys.exit(1)
 
-    states = { '0': 'not in table', '1': 'inside table', '2': 'inside row' }
-    current_state = '0'
     # initialize command line argument options
     lines = ''
     try:
         for line in fileinput.input():
             # print(line, "\n")
             # print("new line ", "\n")
+            line = clean_line(line)
             # print(containstable(line),
             #       containsrow(line),
             #       containshd(line),
@@ -191,28 +225,43 @@ def main():
             #       endtd(line),
             #       endrow(line),
             #       endtable(line))
-            lines += clean_line(line)
+            lines += line
     except FileNotFoundError:
         print("Error: not html table to parse cannot be found or does not exist", file=sys.stderr)
 
     # print(lines)
     tables = containstable(lines)
-    if tables:
-        # print("tables is ", tables, "\n")
-        headers_found = 0
-        for table in tables:
-            fieldnames = []
-            csvdata = []
-            # print("table is ", table, "\n")
-            rows = containsrow(table)
-            if not rows:
-                print("error not rows", "\n")
-            tableheaders = getheaders(rows)
-            data = getdata(rows, fieldnames)
-            csvdata.append(data)
+    if not tables:
+        sys.stderr.write("Error no html table found in stdin")
+        sys.exit(5)
 
-            print_table(tableheaders, csvdata)
-            print("\n")
+    tablenumber = 1
+    for table in tables:
+        fieldnames = []
+        csvdata = []
+        rows = containsrow(table)
+
+        # add data to empty rows to avoid ignoreing them
+        for rowindex in range(len(rows)):
+            if not containshd(rows[rowindex]) and not containstd(rows[rowindex]):
+                # print("row is ", rows[rowindex], "\n")
+                rows[rowindex] = '<td>' + PLACEHOLDER + '</td>'
+                # print("no header or data in row", "\n")
+
+        tableheaders = getheaders(rows)
+        data = getdata(rows, fieldnames)
+        csvdata.append(data)
+
+        colnum = get_colnum(tableheaders, csvdata)
+        csvdata = append_cols(colnum, csvdata)
+
+        if tablenumber != 1:
+            print()
+        print("TABLE " + str(tablenumber) + ":")
+        print_table(tableheaders, csvdata)
+        # print("tables len i ", len(tables), "\n")
+        tablenumber += 1
+        # print("\n")
 
 
 if __name__ == '__main__':
