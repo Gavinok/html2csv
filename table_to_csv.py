@@ -12,7 +12,6 @@
 #
 # Distributed under terms of the GPL license.
 
-import os
 import sys
 import csv
 import fileinput
@@ -27,23 +26,11 @@ def containstable(line):
     return match_tag('table', line)
     # tables = match_tag('table', line)
 
-def endtable(line):
-    """checks if the line contains a table declairation
-    :returns: 0 if not table declairation returns 1 there is
-    """
-    return match_end_tag('table', line)
-
 def containsrow(line):
     """checks if the line contains a table declairation
     :returns: 0 if not table declairation returns 1 there is
     """
     return match_tag('tr', line)
-
-def endrow(line):
-    """checks if the line contains a table declairation
-    :returns: 0 if not table declairation returns 1 there is
-    """
-    return match_end_tag('tr', line)
 
 # only run when in table
 def containshd(line):
@@ -52,12 +39,6 @@ def containshd(line):
     """
     return match_tag('th', line)
 
-def endhd(line):
-    """checks if the line contains a table declairation
-    :returns: 0 if not table declairation returns 1 there is
-    """
-    return match_end_tag('th', line)
-
 # only run when in table
 def containstd(line):
     """checks if the line contains a table declairation
@@ -65,20 +46,24 @@ def containstd(line):
     """
     return match_tag('td', line)
 
-def endtd(line):
-    """checks if the line contains a table declairation
-    :returns: 0 if not table declairation returns 1 there is
-    """
-    return match_end_tag('td', line)
-
 def match_end_tag(tag, line):
     """matches the end of a tag
-    :returns: #  TODO: finish return <02-12-19 Gavin Jaeger-Freeborn>
+    :returns: returns the number of closing tags for `tag`
     """
-    regex = '</' + tag + '>'
-    matchg = re.search(regex, line)
+    regex = '</' + tag + '[^>]*>'
+    matchg = re.findall(regex, line, re.IGNORECASE)
     if matchg:
-        return 1
+        return len(matchg)
+    return 0
+
+def match_start_tag(tag, line):
+    """matches the end of a tag
+    :returns: the number of opening tag in line
+    """
+    regex = '<' + tag + '[^>]*>'
+    matchg = re.findall(regex, line, re.IGNORECASE)
+    if matchg:
+        return len(matchg)
     return 0
 
 def match_tag(tag, line):
@@ -95,12 +80,10 @@ def match_tag(tag, line):
     # remove extra white space
     line = re.sub('\s+', ' ', line)
 
-    matchg = re.search(regex, line)
+    matchg = re.search(regex, line, re.IGNORECASE)
     if matchg:
-        matches = re.findall(lookregex, line)
+        matches = re.findall(lookregex, line, re.IGNORECASE)
         if matches:
-            # for match in matches:
-                # print("match for ", tag, " is ", match, "\n")
             return matches
     return 0
 
@@ -119,7 +102,6 @@ def strip_element(row):
     """removes the placeholder each element in the given row
     :returns: the row without placeholders
     """
-    #  TODO: use regex to remove just the PLACEHOLDER instead using exactly the placeholder <04-12-19 Gavin Jaeger-Freeborn>
     corrected_row = []
     for item in row:
         item = item.strip()
@@ -139,14 +121,13 @@ def getheaders(rows):
                 fieldnames.append(header)
     return fieldnames
 
-def getdata(rows, headers):
+def getdata(rows):
     """gets the data from the given rows as a list of lists
     :returns: list for each row and a list data or 0 if none
     """
     tabledata = []
     for row in rows:
         data = containstd(row)
-        # print("data is ", data , "\n")
         if data:
             datalist = []
             for item in data:
@@ -159,10 +140,6 @@ def print_table(tableheaders, csvdata):
     """ print the given table to stdout
     :returns: 1 if successful 0 if not
     """
-    # colnum = get_colnum(tableheaders, csvdata)
-    # csvdata = append_cols(colnum, csvdata)
-    # print("num of cols is ", colnum, "\n")
-
     writer = csv.writer(sys.stdout, lineterminator='\n')
     # print table headers if they exist
     if len(tableheaders):
@@ -203,33 +180,39 @@ def get_colnum(headers, csvdata):
                 colnum = cols
     return colnum
 
+def validate_line(line):
+    """ check for invalid tags
+    """
+    # check for tags that have spaces before them
+    if re.match('.*<(\s)+.*', line, re.IGNORECASE | re.DOTALL):
+        sys.stderr.write("Error no spaces allowed between < and `tag`")
+        sys.exit(3)
+
+def validate_matching_tags(line):
+    """takes the complete line and ensures that all tags have a matching closing tag
+    """
+    tags = ['tr', 'th', 'table', 'td']
+    for tag in tags:
+        if match_start_tag(tag, line) != match_end_tag(tag, line):
+            sys.stderr.write("Error: unmatched tag", tag)
+            sys.exit(4)
 
 def main():
     """ This is the main for my program"""
+
+    # check for standard input
     if sys.stdin.isatty():
         sys.stderr.write("Error nothing set from stdin")
         sys.exit(1)
 
     # initialize command line argument options
     lines = ''
-    try:
-        for line in fileinput.input():
-            # print(line, "\n")
-            # print("new line ", "\n")
-            line = clean_line(line)
-            # print(containstable(line),
-            #       containsrow(line),
-            #       containshd(line),
-            #       endhd(line),
-            #       containstd(line),
-            #       endtd(line),
-            #       endrow(line),
-            #       endtable(line))
-            lines += line
-    except FileNotFoundError:
-        print("Error: not html table to parse cannot be found or does not exist", file=sys.stderr)
+    for line in fileinput.input():
+        line = clean_line(line)
+        validate_line(line)
+        lines += line
 
-    # print(lines)
+    validate_matching_tags(lines)
     tables = containstable(lines)
     if not tables:
         sys.stderr.write("Error no html table found in stdin")
@@ -237,31 +220,31 @@ def main():
 
     tablenumber = 1
     for table in tables:
-        fieldnames = []
         csvdata = []
         rows = containsrow(table)
 
         # add data to empty rows to avoid ignoreing them
         for rowindex in range(len(rows)):
             if not containshd(rows[rowindex]) and not containstd(rows[rowindex]):
-                # print("row is ", rows[rowindex], "\n")
                 rows[rowindex] = '<td>' + PLACEHOLDER + '</td>'
-                # print("no header or data in row", "\n")
 
         tableheaders = getheaders(rows)
-        data = getdata(rows, fieldnames)
+        data = getdata(rows)
         csvdata.append(data)
 
+        # get the number of columns to put in every row
         colnum = get_colnum(tableheaders, csvdata)
+
+        # apply the number of columns to each row
         csvdata = append_cols(colnum, csvdata)
 
+        # print the appropriate spacing
         if tablenumber != 1:
             print()
+
         print("TABLE " + str(tablenumber) + ":")
         print_table(tableheaders, csvdata)
-        # print("tables len i ", len(tables), "\n")
         tablenumber += 1
-        # print("\n")
 
 
 if __name__ == '__main__':
