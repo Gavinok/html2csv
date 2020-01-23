@@ -6,7 +6,8 @@
 # @author      : Gavin Jaeger-Freeborn (gavinfreeborn@gmail.com)
 # @file        : table_to_csv.py
 # @created     : Sat 30 Nov 2019 01:34:02 PM MST
-# @description : This is a python3 program used to convert HTML tables to a CSV representation
+# @description : This is a python3 program used to
+#                convert HTML tables to a CSV representation.
 #
 # @Copyright © 2019 Gavin Jaeger-Freeborn gavinfreeborn@gmail.com
 #
@@ -19,35 +20,38 @@ import re
 
 PLACEHOLDER = '++xxyyzz'
 
+
 def containstable(line):
-    """checks if the line contains a table declairation
+    """ Checks if the line contains a table declairation
     :returns: 0 if not table declairation returns 1 there is
     """
     return match_tag('table', line)
     # tables = match_tag('table', line)
 
+
 def containsrow(line):
-    """checks if the line contains a table declairation
+    """ Checks if the line contains a table declairation
     :returns: 0 if not table declairation returns 1 there is
     """
     return match_tag('tr', line)
 
-# only run when in table
+
 def containshd(line):
-    """checks if the line contains a table declairation
+    """ Checks if the line contains a table declairation
     :returns: 0 if not table declairation returns 1 there is
     """
     return match_tag('th', line)
 
-# only run when in table
+
 def containstd(line):
-    """checks if the line contains a table declairation
+    """ Checks if the line contains a table declairation
     :returns: 0 if not table declairation returns 1 there is
     """
     return match_tag('td', line)
 
+
 def match_end_tag(tag, line):
-    """matches the end of a tag
+    """ Matches the end of a tag
     :returns: returns the number of closing tags for `tag`
     """
     regex = '</' + tag + '[^>]*>'
@@ -56,8 +60,9 @@ def match_end_tag(tag, line):
         return len(matchg)
     return 0
 
+
 def match_start_tag(tag, line):
-    """matches the end of a tag
+    """ Matches the end of a tag
     :returns: the number of opening tag in line
     """
     regex = '<' + tag + '[^>]*>'
@@ -66,8 +71,9 @@ def match_start_tag(tag, line):
         return len(matchg)
     return 0
 
+
 def match_tag(tag, line):
-    """matches the line against the given regex for a tag
+    """ Matches the line against the given regex for a tag
     :returns: all matches if tag is found and 0 if not
     """
     regex = '<' + tag + '[^>]*>'
@@ -87,8 +93,9 @@ def match_tag(tag, line):
             return matches
     return 0
 
+
 def clean_line(line):
-    """ removes the non table related tags,
+    """ Removes the non table related tags,
         puts a placeholder in empty tags,
         and removes newline character
     :returns: simplified line successful 0 if not
@@ -98,8 +105,9 @@ def clean_line(line):
     line = line.rstrip()
     return line
 
+
 def strip_element(row):
-    """removes the placeholder each element in the given row
+    """ Removes the placeholder each element in the given row
     :returns: the row without placeholders
     """
     corrected_row = []
@@ -109,8 +117,9 @@ def strip_element(row):
         corrected_row.append(item)
     return corrected_row
 
+
 def getheaders(rows):
-    """gets the headers from the given rows as a list
+    """ Gets the headers from the given rows as a list
     :returns: list of headers or 0 if none
     """
     fieldnames = []
@@ -121,8 +130,9 @@ def getheaders(rows):
                 fieldnames.append(header)
     return fieldnames
 
+
 def getdata(rows):
-    """gets the data from the given rows as a list of lists
+    """ Gets the data from the given rows as a list of lists
     :returns: list for each row and a list data or 0 if none
     """
     tabledata = []
@@ -136,8 +146,9 @@ def getdata(rows):
 
     return tabledata
 
+
 def print_table(tableheaders, csvdata):
-    """ print the given table to stdout
+    """ Print the given table to stdout
     :returns: 1 if successful 0 if not
     """
     writer = csv.writer(sys.stdout, lineterminator='\n')
@@ -152,8 +163,9 @@ def print_table(tableheaders, csvdata):
             writer.writerow(j)
     return 1
 
+
 def append_cols(num, csvdata):
-    """ensures all rows have the same number of columns as num
+    """ Ensures all rows have the same number of columns as num
     :returns: csvdata with corrected number of column
     """
     for i in csvdata:
@@ -162,8 +174,9 @@ def append_cols(num, csvdata):
                 j.append('')
     return csvdata
 
+
 def get_colnum(headers, csvdata):
-    """ adds empty column to the rows that don't contain any data
+    """ Adds empty column to the rows that don't contain any data
     :returns: list of rows with corrected column number
     """
     colnum = -1
@@ -180,22 +193,26 @@ def get_colnum(headers, csvdata):
                 colnum = cols
     return colnum
 
+
 def validate_line(line):
-    """ check for invalid tags
+    """ Check for invalid tags
     """
     # check for tags that have spaces before them
     if re.match('.*<(\s)+.*', line, re.IGNORECASE | re.DOTALL):
         sys.stderr.write("Error no spaces allowed between < and `tag`")
         sys.exit(3)
 
+
 def validate_matching_tags(line):
-    """takes the complete line and ensures that all tags have a matching closing tag
+    """ Takes the complete line and ensures that all tags
+    have a matching closing tag
     """
     tags = ['tr', 'th', 'table', 'td']
     for tag in tags:
         if match_start_tag(tag, line) != match_end_tag(tag, line):
-            sys.stderr.write("Error: unmatched tag", tag)
+            sys.stderr.write("Error: unmatched tag")
             sys.exit(4)
+
 
 def main():
     """ This is the main for my program"""
@@ -225,7 +242,8 @@ def main():
 
         # add data to empty rows to avoid ignoreing them
         for rowindex in range(len(rows)):
-            if not containshd(rows[rowindex]) and not containstd(rows[rowindex]):
+            if not containshd(rows[rowindex]) and \
+                    not containstd(rows[rowindex]):
                 rows[rowindex] = '<td>' + PLACEHOLDER + '</td>'
 
         tableheaders = getheaders(rows)
