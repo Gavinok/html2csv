@@ -18,14 +18,14 @@ import csv
 import fileinput
 import re
 
-PLACEHOLDER = '++xxyyzz'
+PLACEHOLDER = "++xxyyzz"
 
 
 def containstable(line):
     """ Checks if the line contains a table declairation
     :returns: 0 if not table declairation returns 1 there is
     """
-    return match_tag('table', line)
+    return match_tag("table", line)
     # tables = match_tag('table', line)
 
 
@@ -33,28 +33,28 @@ def containsrow(line):
     """ Checks if the line contains a table declairation
     :returns: 0 if not table declairation returns 1 there is
     """
-    return match_tag('tr', line)
+    return match_tag("tr", line)
 
 
 def containshd(line):
     """ Checks if the line contains a table declairation
     :returns: 0 if not table declairation returns 1 there is
     """
-    return match_tag('th', line)
+    return match_tag("th", line)
 
 
 def containstd(line):
     """ Checks if the line contains a table declairation
     :returns: 0 if not table declairation returns 1 there is
     """
-    return match_tag('td', line)
+    return match_tag("td", line)
 
 
 def match_end_tag(tag, line):
     """ Matches the end of a tag
     :returns: returns the number of closing tags for `tag`
     """
-    regex = '</' + tag + '[^>]*>'
+    regex = "</" + tag + "[^>]*>"
     matchg = re.findall(regex, line, re.IGNORECASE)
     if matchg:
         return len(matchg)
@@ -65,7 +65,7 @@ def match_start_tag(tag, line):
     """ Matches the end of a tag
     :returns: the number of opening tag in line
     """
-    regex = '<' + tag + '[^>]*>'
+    regex = "<" + tag + "[^>]*>"
     matchg = re.findall(regex, line, re.IGNORECASE)
     if matchg:
         return len(matchg)
@@ -76,15 +76,15 @@ def match_tag(tag, line):
     """ Matches the line against the given regex for a tag
     :returns: all matches if tag is found and 0 if not
     """
-    regex = '<' + tag + '[^>]*>'
+    regex = "<" + tag + "[^>]*>"
 
-    lookregex = '(?<=<' + tag + '>)(.*?)?(?=</' + tag + '>)'
+    lookregex = "(?<=<" + tag + ">)(.*?)?(?=</" + tag + ">)"
 
     # remove extra data from tag
-    line = re.sub('<' + tag + '[^>]*>', '<' + tag + '>', line)
-    line = re.sub('</' + tag + '[^>]*>', '</' + tag + '>', line)
+    line = re.sub("<" + tag + "[^>]*>", "<" + tag + ">", line)
+    line = re.sub("</" + tag + "[^>]*>", "</" + tag + ">", line)
     # remove extra white space
-    line = re.sub('\s+', ' ', line)
+    line = re.sub("\s+", " ", line)
 
     matchg = re.search(regex, line, re.IGNORECASE)
     if matchg:
@@ -100,8 +100,8 @@ def clean_line(line):
         and removes newline character
     :returns: simplified line successful 0 if not
     """
-    line = re.sub('></', '>' + PLACEHOLDER + '</', line)
-    line = re.sub('></', '>' + PLACEHOLDER + '</', line)
+    line = re.sub("></", ">" + PLACEHOLDER + "</", line)
+    line = re.sub("></", ">" + PLACEHOLDER + "</", line)
     line = line.rstrip()
     return line
 
@@ -113,7 +113,7 @@ def strip_element(row):
     corrected_row = []
     for item in row:
         item = item.strip()
-        item = item.replace(PLACEHOLDER, '')
+        item = item.replace(PLACEHOLDER, "")
         corrected_row.append(item)
     return corrected_row
 
@@ -151,7 +151,7 @@ def print_table(tableheaders, csvdata):
     """ Print the given table to stdout
     :returns: 1 if successful 0 if not
     """
-    writer = csv.writer(sys.stdout, lineterminator='\n')
+    writer = csv.writer(sys.stdout, lineterminator="\n")
     # print table headers if they exist
     if len(tableheaders):
         writer.writerow(tableheaders)
@@ -171,7 +171,7 @@ def append_cols(num, csvdata):
     for i in csvdata:
         for j in i:
             for x in range(num - len(j)):
-                j.append('')
+                j.append("")
     return csvdata
 
 
@@ -198,7 +198,7 @@ def validate_line(line):
     """ Check for invalid tags
     """
     # check for tags that have spaces before them
-    if re.match('.*<(\s)+.*', line, re.IGNORECASE | re.DOTALL):
+    if re.match(".*<(\s)+.*", line, re.IGNORECASE | re.DOTALL):
         sys.stderr.write("Error no spaces allowed between < and `tag`")
         sys.exit(3)
 
@@ -207,7 +207,7 @@ def validate_matching_tags(line):
     """ Takes the complete line and ensures that all tags
     have a matching closing tag
     """
-    tags = ['tr', 'th', 'table', 'td']
+    tags = ["tr", "th", "table", "td"]
     for tag in tags:
         if match_start_tag(tag, line) != match_end_tag(tag, line):
             sys.stderr.write("Error: unmatched tag")
@@ -223,7 +223,7 @@ def main():
         sys.exit(1)
 
     # initialize command line argument options
-    lines = ''
+    lines = ""
     for line in fileinput.input():
         line = clean_line(line)
         validate_line(line)
@@ -242,9 +242,8 @@ def main():
 
         # add data to empty rows to avoid ignoreing them
         for rowindex in range(len(rows)):
-            if not containshd(rows[rowindex]) and \
-                    not containstd(rows[rowindex]):
-                rows[rowindex] = '<td>' + PLACEHOLDER + '</td>'
+            if not containshd(rows[rowindex]) and not containstd(rows[rowindex]):
+                rows[rowindex] = "<td>" + PLACEHOLDER + "</td>"
 
         tableheaders = getheaders(rows)
         data = getdata(rows)
@@ -265,5 +264,5 @@ def main():
         tablenumber += 1
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
